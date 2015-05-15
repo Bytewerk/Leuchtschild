@@ -58,6 +58,7 @@ void soft_reset( void ) {
 int main( void ) {
 	can_t msg_tx, msg_rx;
 	uint32_t now, t_send_msg;
+	uint8_t l_mode = 2;
 
 	//PORTB |= (1<<PB0); // CLK | DATA
 	DDRB |= (1<<PB0);
@@ -91,34 +92,32 @@ int main( void ) {
 				msg_tx.id = 0xEE;
 				soft_reset( );
 			}
-				msg_tx.id = 0xEE;
-				can_send_message( &msg_tx );
+			else if ( msg_rx.id == 0x13370900 ) {
+				l_mode = msg_rx.data[0];
+			}
 		}
-/*
 		switch (l_mode) {
 		case 0:
-		  break;
+			break;
 		case 1:
-		  patternComets( );
-		  break;
+			patternComets( );
+			break;
 		case 2:
-		  patternAnnoying( );
-		  break;
+			patternAnnoying( );
+			break;
 		case 3:
-		  patternRandomDiscret( );
-		  break;
+			patternRandomDiscret( );
+			break;
 		case 4:
-		  patternRandom( );
-		  break;
+			patternRandom( );
+			break;
 		case 5:
-		  patternRandomTransition( );
-		  break;
+			patternRandomTransition( );
+			break;
 		default:
-		  patternFading( );
-		  break;
+			patternFading( );
+			break;
 		}
-*/
-	_delay_ms(1);
 	}
 	return 0;
 }
