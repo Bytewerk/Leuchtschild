@@ -1,0 +1,7 @@
+syntax: glob
+
+./build/
+./src/can/.dep/
+./src/can/build/
+./src/can/libcan.a
+
