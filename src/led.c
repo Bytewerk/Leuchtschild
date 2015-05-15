@@ -19,8 +19,8 @@
 #include "led.h"
 
 
-#define DAT PB4
-#define CLK PB7
+#define DAT PB0
+#define CLK PB1
 
 
 
@@ -45,18 +45,17 @@ void led_execute( void ) {
 void led_sendByte( uint8_t data ) {
 	int i;
 
-  for(i=0; i<8; i++) {
-    PORTB &= ~(1<<CLK);
-    if( (data<<i)&0x80 )
-      PORTB |= (1<<DAT);
-    else
-      PORTB &= ~(1<<DAT);
+	for(i=0; i<8; i++) {
+		PORTB &= ~(1<<CLK);
+		if( (data<<i)&0x80 )
+			PORTB |= (1<<DAT);
+		else
+			PORTB &= ~(1<<DAT);
 
-    PORTB |= (1<<CLK);
-    PORTB &= ~(1<<CLK);
-  }
+		PORTB |= (1<<CLK);
+		PORTB &= ~(1<<CLK);
+	}
 }
-
 
 
 

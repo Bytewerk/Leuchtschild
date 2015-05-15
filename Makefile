@@ -12,7 +12,7 @@ COMPILE_DATE="$(DATE) $(HOUR):$(MIN) CET"
 CC=avr-gcc
 OBJCPY=avr-objcopy
 AVRDUDE=sudo avrdude
-AVRDUDEARCH=m64
+AVRDUDEARCH=m16
 AVRDUDEPROG=usbtiny
 
 BR=$(BROOT)/bin
@@ -25,13 +25,13 @@ OBJR=$(OBJTMP:%.c=$(BR)/obj/%.o)
 RELEASE_DEFINES =  -DCOMPILE_DATE=\"$(COMPILE_DATE)\"
 RELEASE_DEFINES += -DF_CPU=16000000UL
 RELEASE_DEFINES += -DCOLOR
-BASE_CFLAGS= -mmcu=atmega64m1 -Os -pedantic -fPIC -std=c99
+BASE_CFLAGS= -mmcu=atmega16m1 -Os -pedantic -fPIC -std=c99
 CFLAGS=$(BASE_CFLAGS)
-
+LDFLAGS=-lcan -Lsrc/can
 
 
 .PHONY: all objcopy clean
-release: $(BR)/$(BINARY).hex
+release: $(BR)/$(BINARY).hex $(BR)/$(BINARY).bin
 all: release
 
 
@@ -57,6 +57,12 @@ $(BR)/obj/%.o: src/%.c $(HDR_FILES)
 $(BR)/$(BINARY).hex: $(BR)/$(BINARY).elf
 	@printf "OBJCPY  \033\13301;33m-\033\13301;37m %-20s %s\033\13300;39m\n" $@
 	@$(OBJCPY) -O ihex $(BR)/$(BINARY).elf $(BR)/$(BINARY).hex
+
+#####
+# ObjCopy
+$(BR)/$(BINARY).bin: $(BR)/$(BINARY).elf
+	@printf "OBJCPY  \033\13301;33m-\033\13301;37m %-20s %s\033\13300;39m\n" $@
+	@$(OBJCPY) -O binary $(BR)/$(BINARY).elf $(BR)/$(BINARY).bin
 
 
 

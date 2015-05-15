@@ -17,8 +17,10 @@
 #include <util/delay.h>
 #include "random.h"
 #include "led.h"
-
-
+#include "can/can.h"
+#include "timer.h"
+#include <avr/wdt.h>
+#include <avr/interrupt.h>
 
 #define NUM_LEDS 40
 
@@ -31,29 +33,93 @@ void patternComets( void );
 void patternRandomDiscret( void );
 void hsv_to_rgb( uint8_t h, uint8_t s, uint8_t v, uint8_t* red, uint8_t* green, uint8_t* blue );
 void patternFading( void );
+int my_can_init(void);
+
+
+/*
+// Function Pototype
+void wdt_init(void) __attribute__((naked)) __attribute__((section(".init1")));
+
+// Function Implementation
+void wdt_init(void) {
+	MCUSR = 0;
+	wdt_disable();
+	return;
+}
+*/
+
+void soft_reset( void ) {
+	wdt_enable(WDTO_500MS);
+	while(1);
+}
 
 
 
 int main( void ) {
-	int i=0, j=0, k=0;
+	can_t msg_tx, msg_rx;
+	uint32_t now, t_send_msg;
 
-	PORTB |= (0<<PB7)|(1<<PB4); // CLK | DATA
-	DDRB |= (1<<PB4)|(1<<PB7);
+	//PORTB |= (1<<PB0); // CLK | DATA
+	DDRB |= (1<<PB0);
+	DDRB |= (1<<PB1);
 
-	DDRD  |= (1<<PD7); // TestLED
-	PORTD |= (1<<PD7);
+	msg_tx.id = 0x123;
+	msg_tx.flags.extended = 0;
+	msg_tx.flags.rtr = 0;
+	msg_tx.length = 1;
 
+	timer_init();
+	my_can_init( );
+	sei( );
+
+	t_send_msg = 0;
 	while( 1 ) {
-		PORTD ^= (1<<PD7);
-
+		now = timer_get();
 		patternFading( );
-		//patternComets( );
-		//patternAnnoying( );
-		//patternRandomDiscret( );
-		//patternRandom( );
-		//patternRandomTransition( );
-	}
 
+
+		if( t_send_msg + 100 < now ) {
+			t_send_msg = now;
+			can_send_message( &msg_tx );
+			msg_tx.data[0]++;
+		}
+
+		if ( can_check_message() ) {
+			can_get_message( &msg_rx );
+
+			if( msg_rx.id == 0x133707FF ) {
+				msg_tx.id = 0xEE;
+				soft_reset( );
+			}
+				msg_tx.id = 0xEE;
+				can_send_message( &msg_tx );
+		}
+/*
+		switch (l_mode) {
+		case 0:
+		  break;
+		case 1:
+		  patternComets( );
+		  break;
+		case 2:
+		  patternAnnoying( );
+		  break;
+		case 3:
+		  patternRandomDiscret( );
+		  break;
+		case 4:
+		  patternRandom( );
+		  break;
+		case 5:
+		  patternRandomTransition( );
+		  break;
+		default:
+		  patternFading( );
+		  break;
+		}
+*/
+	_delay_ms(1);
+	}
 	return 0;
 }
 
@@ -310,4 +376,22 @@ void patternRandomTransition ( void ) {
 		}
 		led_execute( );
 	}
+}
+
+
+
+int my_can_init(void) {
+	can_init( BITRATE_500_KBPS );
+
+	can_filter_t can_filter = {     .id = 0, .mask = 0, .flags = { .rtr = 0, .extended = 0 } };
+	can_set_filter( 0, &can_filter );
+	can_set_filter( 1, &can_filter );
+	can_set_filter( 2, &can_filter );
+
+	// PB3 == STDBY
+	// PB4 == EN
+	DDRB  |= (1<<PB3)|(1<<PB4);
+	PORTB |= (1<<PB3)|(1<<PB4);
+
+return 0;
 }
