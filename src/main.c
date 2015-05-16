@@ -22,9 +22,10 @@
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
 
-#define NUM_LEDS 40
-
-
+#define NUM_LEDS      40
+#define RESET_MSG     0x000101FF
+#define SWITCH_MSG    0x00010100
+#define HEARTBEAT_MSG 0x00010101
 
 void patternRandomTransition ( void );
 void patternRandom( void );
@@ -56,18 +57,13 @@ void soft_reset( void ) {
 
 
 int main( void ) {
+	int i;
 	can_t msg_tx, msg_rx;
 	uint32_t now, t_send_msg;
-	uint8_t l_mode = 2;
+	uint8_t l_mode = 0;
 
-	//PORTB |= (1<<PB0); // CLK | DATA
-	DDRB |= (1<<PB0);
-	DDRB |= (1<<PB1);
-
-	msg_tx.id = 0x123;
-	msg_tx.flags.extended = 0;
-	msg_tx.flags.rtr = 0;
-	msg_tx.length = 1;
+	DDRB |= (1<<PB0); // DAT
+	DDRB |= (1<<PB1); // CLK
 
 	timer_init();
 	my_can_init( );
@@ -79,8 +75,14 @@ int main( void ) {
 		patternFading( );
 
 
-		if( t_send_msg + 100 < now ) {
+		if( t_send_msg + 1000 < now ) {
 			t_send_msg = now;
+
+			msg_tx.id = HEARTBEAT_MSG;
+			msg_tx.flags.extended = 1;
+			msg_tx.flags.rtr = 0;
+			msg_tx.length = 1;
+
 			can_send_message( &msg_tx );
 			msg_tx.data[0]++;
 		}
@@ -88,34 +90,47 @@ int main( void ) {
 		if ( can_check_message() ) {
 			can_get_message( &msg_rx );
 
-			if( msg_rx.id == 0x133707FF ) {
-				msg_tx.id = 0xEE;
+			if( msg_rx.id == RESET_MSG ) {
 				soft_reset( );
 			}
-			else if ( msg_rx.id == 0x13370900 ) {
+			else if ( msg_rx.id == SWITCH_MSG ) {
 				l_mode = msg_rx.data[0];
 			}
 		}
-		switch (l_mode) {
-		case 0:
+		switch( l_mode ) {
+
+			case 0:
+				for( i=0; i<NUM_LEDS; i++ ) {
+					led_pushDataset( 0,0,0 );
+				}
 			break;
-		case 1:
-			patternComets( );
+
+			case 1:
+				patternComets( );
 			break;
-		case 2:
-			patternAnnoying( );
+
+			case 2:
+				patternAnnoying( );
 			break;
-		case 3:
-			patternRandomDiscret( );
+
+			case 3:
+				patternRandomDiscret( );
 			break;
-		case 4:
-			patternRandom( );
+
+			case 4:
+				patternRandom( );
 			break;
-		case 5:
-			patternRandomTransition( );
+
+			case 5:
+				patternRandomTransition( );
 			break;
-		default:
-			patternFading( );
+
+			case 6:
+				patternRandomTransition( );
+			break;
+
+			default:
+				patternFading( );
 			break;
 		}
 	}
