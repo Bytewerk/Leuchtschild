@@ -22,11 +22,23 @@
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
 
-#define NUM_LEDS      40
-#define RESET_MSG     0x000101FF
-#define SWITCH_MSG    0x00010100
-#define HEARTBEAT_MSG 0x00010101
+#define NUM_LEDS 40
 
+#define HEARTBEAT_MSG       0x00010100
+#define DISP_CONTENT_MSG 0x00010101
+
+#define SWITCH_MODE_MSG      0x00010111 // [mode]
+#define SET_COLOR_MSG        0x00010112 // [R][G][B]
+#define SET_LED_MSG          0x00010113 // [R][G][B][ID]
+#define SET_LED_MSG          0x00010113 // [R][G][B][ID]
+#define REQ_DISP_CONTENT_MSG 0x00010120 // [RATE(fps)]
+#define RESET_MSG            0x000101FF
+
+
+static uint8_t memory_leds[NUM_LEDS][3];
+
+void setMemoryLed( uint8_t color[3], uint8_t id );
+void patternMemory( void );
 void patternRandomTransition ( void );
 void patternRandom( void );
 void patternAnnoying( void );
@@ -69,6 +81,12 @@ int main( void ) {
 	my_can_init( );
 	sei( );
 
+	// default is black
+	for(i=0; i<NUM_LEDS; i++ ) {
+		memory_leds[i][0] = 0;
+		memory_leds[i][1] = 0;
+		memory_leds[i][2] = 0;
+	}
 	t_send_msg = 0;
 	while( 1 ) {
 		now = timer_get();
@@ -87,16 +105,33 @@ int main( void ) {
 			msg_tx.data[0]++;
 		}
 
+
+		// receive CAN
 		if ( can_check_message() ) {
 			can_get_message( &msg_rx );
 
-			if( msg_rx.id == RESET_MSG ) {
-				soft_reset( );
-			}
-			else if ( msg_rx.id == SWITCH_MSG ) {
-				l_mode = msg_rx.data[0];
+			switch( msg_rx.id ) {
+				case RESET_MSG:
+					 soft_reset( );
+				break;
+
+				case SWITCH_MODE_MSG:
+					l_mode = msg_rx.data[0];
+				break;
+
+				case SET_COLOR_MSG: // [R][G][B]
+					l_mode = 8;
+				break;
+
+				case REQ_DISP_CONTENT_MSG: // [RATE(fps)]
+				break;
+
+				case SET_LED_MSG: // [R][G][B][LEDID]
+				break;
 			}
 		}
+
+
 		switch( l_mode ) {
 
 			case 0:
@@ -129,12 +164,42 @@ int main( void ) {
 				patternRandomTransition( );
 			break;
 
+			case 7:
+				patternFading();
+			break;
+
+			case 8:
+				patternMemory();
+			break;
+
 			default:
 				patternFading( );
 			break;
 		}
 	}
 	return 0;
+}
+
+
+
+void setMemoryLed( uint8_t color[3], uint8_t id ) {
+	if( id >= NUM_LEDS )
+		return;
+
+	memory_leds[id][0] = color[0];
+	memory_leds[id][1] = color[1];
+	memory_leds[id][2] = color[2];
+	return;
+}
+
+void patternMemory( void ) {
+	int i;
+
+	for(i=0; i<NUM_LEDS; i++) {
+		led_pushDataset( memory_leds[i][0], memory_leds[i][1], memory_leds[i][2] );
+	}
+
+	led_execute( );
 }
 
 
