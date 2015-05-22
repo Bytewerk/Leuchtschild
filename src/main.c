@@ -46,7 +46,10 @@ void patternComets( void );
 void patternRandomDiscret( void );
 void hsv_to_rgb( uint8_t h, uint8_t s, uint8_t v, uint8_t* red, uint8_t* green, uint8_t* blue );
 void patternFading( void );
-int my_can_init(void);
+int  my_can_init(void);
+void goto_sleep_mode(void);
+int  goto_active_mode(void);
+void leds_all_off(void);
 
 
 /*
@@ -73,6 +76,7 @@ int main( void ) {
 	can_t msg_tx, msg_rx;
 	uint32_t now, t_send_msg;
 	uint8_t l_mode = 0;
+	uint32_t t_sleep = 30000;
 
 	DDRB |= (1<<PB0); // DAT
 	DDRB |= (1<<PB1); // CLK
@@ -92,6 +96,10 @@ int main( void ) {
 		now = timer_get();
 		patternFading( );
 
+		if (now > t_sleep) {
+			leds_all_off();
+			goto_sleep_mode();
+		}
 
 		if( t_send_msg + 1000 < now ) {
 			t_send_msg = now;
@@ -109,7 +117,8 @@ int main( void ) {
 		// receive CAN
 		if ( can_check_message() ) {
 			can_get_message( &msg_rx );
-
+			t_sleep = timer_get() + 5000;
+			
 			switch( msg_rx.id ) {
 				case RESET_MSG:
 					 soft_reset( );
@@ -458,6 +467,13 @@ void patternRandomTransition ( void ) {
 }
 
 
+void leds_all_off(void)
+{
+	for( uint8_t i=0; i<NUM_LEDS; i++ ) {
+		led_pushDataset( 0,0,0 );
+	}
+}
+
 
 int my_can_init(void) {
 	can_init( BITRATE_500_KBPS );
@@ -470,7 +486,29 @@ int my_can_init(void) {
 	// PB3 == STDBY
 	// PB4 == EN
 	DDRB  |= (1<<PB3)|(1<<PB4);
-	PORTB |= (1<<PB3)|(1<<PB4);
-
-return 0;
+	goto_active_mode();
+	
+	return 0;
 }
+
+
+void goto_sleep_mode(void)
+{
+	// PB3 == STDBY
+	// PB4 == EN
+	PORTB &= ~(1<<PB3);
+	PORTB |=  (1<<PB4);
+
+	wdt_enable(WDTO_500MS);
+	while(1) { ; } // wait for sleep or watchdog reset
+}
+
+
+int goto_active_mode(void)
+{
+	// PB3 == STDBY
+	// PB4 == EN
+	PORTB |= (1<<PB3)|(1<<PB4);
+	return 0;
+}
+
