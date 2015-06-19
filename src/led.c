@@ -15,17 +15,112 @@
 */
 #include <avr/io.h>
 #include <util/delay.h>
-
+#include "config.h"
+#include "timer.h"
 #include "led.h"
-
 
 #define DAT PB0
 #define CLK PB1
 
 
 
-void led_pushDataset( uint8_t r, uint8_t g, uint8_t b ) {
+typedef enum {
+	s_changeWait,
+	s_sending,
+	s_flush,
+	s_flushWait,
+} s_ledStates;
 
+
+
+
+static uint8_t memory_leds[NUM_LEDS][3];
+static uint8_t memory_leds_change=0;
+
+
+
+void led_init( void ) {
+	uint8_t i;
+
+	// LEDs
+	DDRB |= (1<<PB0); // DAT
+	DDRB |= (1<<PB1); // CLK
+
+	// default is black
+	for(i=0; i<NUM_LEDS; i++ ) {
+		memory_leds[i][0] = 0;
+		memory_leds[i][1] = 0;
+		memory_leds[i][2] = 0;
+	}
+}
+
+
+
+void led_clear( void ) {
+	uint8_t i;
+
+	for( i=0; i<NUM_LEDS; i++ ) {
+		led_set( i, 0,0,0 );
+	}
+}
+
+
+
+
+void led_set( uint8_t ledId, uint8_t r, uint8_t g, uint8_t b ) {
+	if( ledId < NUM_LEDS ) {
+		memory_leds[ledId][r] = r;
+		memory_leds[ledId][g] = g;
+		memory_leds[ledId][b] = b;
+	}
+}
+
+
+
+void led_run( void ) {
+	static uint32_t timeout=0;
+	uint32_t now = timer_getMs();
+	static uint8_t state=s_sending;
+	uint8_t i;
+
+	switch( state ) {
+		case s_sending:
+			for( i=0; i<NUM_LEDS; i++ ) {
+				led_pushDataset( memory_leds[i][0], memory_leds[i][1], memory_leds[i][2] );
+			}
+		break;
+
+		case s_flush:
+			state = s_flushWait;
+
+			timeout = now +1;
+			led_flush( );
+		break;
+
+		case s_flushWait:
+			// protocol requires us to wait for 500 us
+			// so we wait at least 1 ms
+			if( timeout < now ) {
+				state = s_changeWait;
+			}
+		break;
+
+		case s_changeWait:
+			if( memory_leds_change ) {
+				memory_leds_change = 1;
+				state = s_sending;
+			}
+		break;
+
+		default:
+			state = s_flushWait;
+		break;
+	}
+}
+
+
+
+void led_pushDataset( uint8_t r, uint8_t g, uint8_t b ) {
 	led_sendByte( r );
 	led_sendByte( g );
 	led_sendByte( b );
@@ -33,10 +128,11 @@ void led_pushDataset( uint8_t r, uint8_t g, uint8_t b ) {
 
 
 
-void led_execute( void ) {
+void led_flush( void ) {
+	// activate newest dataset
+	// set clock pin to LOW for at least 500 uS
 	PORTB &= ~(1<<DAT);
 	PORTB &= ~(1<<CLK); // clock
-	_delay_ms(1);
 	return;
 }
 
@@ -52,7 +148,7 @@ void led_sendByte( uint8_t data ) {
 		else
 			PORTB &= ~(1<<DAT);
 
-		PORTB |= (1<<CLK);
+		PORTB |= (1<<CLK); // send
 		PORTB &= ~(1<<CLK);
 	}
 }
@@ -61,6 +157,7 @@ void led_sendByte( uint8_t data ) {
 
 uint16_t gamma16( uint8_t input ) {
 	/*
+
 	 * 16 bits to 8 bit CIE Lightness conversion
 	 * L* = 116(Y/Yn)^1/3 - 16 , Y/Yn > 0.008856
 	 * L* = 903.3(Y/Yn), Y/Yn <= 0.008856

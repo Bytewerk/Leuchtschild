@@ -9,9 +9,10 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-void timer_wait(uint32_t delay);
-uint32_t timer_get(void);
-void timer_init(void);
+void timer_wait( uint32_t delay );
+uint32_t timer_getMs( void );
+void timer_init( void );
 
-
+#else
+#error "double include timer.h"
 #endif //__TIMER_H__

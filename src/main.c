@@ -15,41 +15,20 @@
 */
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/wdt.h>
+#include <avr/interrupt.h>
+#include "config.h"
 #include "random.h"
 #include "led.h"
 #include "can/can.h"
 #include "timer.h"
-#include <avr/wdt.h>
-#include <avr/interrupt.h>
-
-#define NUM_LEDS 40
-
-#define HEARTBEAT_MSG       0x00010100
-#define DISP_CONTENT_MSG 0x00010101
-
-#define SWITCH_MODE_MSG      0x00010111 // [mode]
-#define SET_COLOR_MSG        0x00010112 // [R][G][B]
-#define SET_LED_MSG          0x00010113 // [R][G][B][ID]
-#define SET_LED_MSG          0x00010113 // [R][G][B][ID]
-#define REQ_DISP_CONTENT_MSG 0x00010120 // [RATE(fps)]
-#define RESET_MSG            0x000101FF
+#include "pattern.h"
 
 
-static uint8_t memory_leds[NUM_LEDS][3];
-
-void setMemoryLed( uint8_t color[3], uint8_t id );
-void patternMemory( void );
-void patternRandomTransition ( void );
-void patternRandom( void );
-void patternAnnoying( void );
-void patternComets( void );
-void patternRandomDiscret( void );
-void hsv_to_rgb( uint8_t h, uint8_t s, uint8_t v, uint8_t* red, uint8_t* green, uint8_t* blue );
-void patternFading( void );
+void soft_reset( void );
 int  my_can_init(void);
 void goto_sleep_mode(void);
 int  goto_active_mode(void);
-void leds_all_off(void);
 
 
 /*
@@ -72,53 +51,49 @@ void soft_reset( void ) {
 
 
 int main( void ) {
-	int i;
+	uint8_t i;
 	can_t msg_tx, msg_rx;
-	uint32_t now, t_send_msg;
-	uint8_t l_mode = 0;
+	uint32_t now, t_send_heartbeat=0;
 	uint32_t t_sleep = 30000;
+	uint8_t l_mode = 7;
 
-	DDRB |= (1<<PB0); // DAT
-	DDRB |= (1<<PB1); // CLK
-
-	timer_init();
+	timer_init( );
+	led_init( );
 	my_can_init( );
 	sei( );
 
-	// default is black
-	for(i=0; i<NUM_LEDS; i++ ) {
-		memory_leds[i][0] = 0;
-		memory_leds[i][1] = 0;
-		memory_leds[i][2] = 0;
-	}
-	t_send_msg = 0;
-	while( 1 ) {
-		now = timer_get();
-		patternFading( );
 
-		if (now > t_sleep) {
-			leds_all_off();
+	wdt_enable(WDTO_500MS);
+	while( 1 ) {
+		wdt_reset();
+
+		now = timer_getMs( );
+		led_run( );
+
+		if( t_sleep + 5000 < now ) {
+			led_clear( );
 			goto_sleep_mode();
 		}
 
-		if( t_send_msg + 1000 < now ) {
-			t_send_msg = now;
+		if( t_send_heartbeat + 1000 < now ) {
+			t_send_heartbeat = now;
 
 			msg_tx.id = HEARTBEAT_MSG;
 			msg_tx.flags.extended = 1;
 			msg_tx.flags.rtr = 0;
-			msg_tx.length = 1;
+			msg_tx.length = 2;
+			msg_tx.data[0] = l_mode;
 
 			can_send_message( &msg_tx );
-			msg_tx.data[0]++;
+			msg_tx.data[1]++;
 		}
 
 
 		// receive CAN
 		if ( can_check_message() ) {
 			can_get_message( &msg_rx );
-			t_sleep = timer_get() + 5000;
-			
+			t_sleep = now;
+
 			switch( msg_rx.id ) {
 				case RESET_MSG:
 					 soft_reset( );
@@ -129,7 +104,6 @@ int main( void ) {
 				break;
 
 				case SET_COLOR_MSG: // [R][G][B]
-					l_mode = 8;
 				break;
 
 				case REQ_DISP_CONTENT_MSG: // [RATE(fps)]
@@ -144,335 +118,20 @@ int main( void ) {
 		switch( l_mode ) {
 
 			case 0:
-				for( i=0; i<NUM_LEDS; i++ ) {
-					led_pushDataset( 0,0,0 );
-				}
+				led_clear( );
 			break;
 
 			case 1:
-				patternComets( );
-			break;
-
-			case 2:
-				patternAnnoying( );
-			break;
-
-			case 3:
-				patternRandomDiscret( );
-			break;
-
-			case 4:
-				patternRandom( );
-			break;
-
-			case 5:
-				patternRandomTransition( );
-			break;
-
-			case 6:
-				patternRandomTransition( );
-			break;
-
-			case 7:
-				patternFading();
-			break;
-
-			case 8:
-				patternMemory();
+				pattern_fading( );
 			break;
 
 			default:
-				patternFading( );
 			break;
 		}
 	}
 	return 0;
 }
 
-
-
-void setMemoryLed( uint8_t color[3], uint8_t id ) {
-	if( id >= NUM_LEDS )
-		return;
-
-	memory_leds[id][0] = color[0];
-	memory_leds[id][1] = color[1];
-	memory_leds[id][2] = color[2];
-	return;
-}
-
-void patternMemory( void ) {
-	int i;
-
-	for(i=0; i<NUM_LEDS; i++) {
-		led_pushDataset( memory_leds[i][0], memory_leds[i][1], memory_leds[i][2] );
-	}
-
-	led_execute( );
-}
-
-
-
-void patternFading( void ) {
-	int j;
-	uint8_t color[3];
-	static uint8_t last_color;
-
-	for(j=0; j<NUM_LEDS; j++) {
-		hsv_to_rgb( last_color+(6*j), 0xff/*s*/, 0xff/*v*/, &color[0], &color[1], &color[2] );
-
-		led_pushDataset( color[0], color[1], color[2] );
-
-	}
-
-	last_color++;
-	led_execute( );
-	_delay_ms(5);
-}
-
-
-
-
-void patternAnnoying( void ) {
-	int j;
-	uint16_t rnd, rnd2;
-	uint8_t color[3];
-	static uint8_t last_color=0;
-
-	for(j=0; j<NUM_LEDS; j++) {
-		switch( last_color ) {
-			case 0:
-				color[0] = 0xff;
-				color[1] = 0xff;
-				color[2] = 0xff;
-			break;
-
-			case 1:
-				color[0] = 0xff;
-				color[1] = 0x00;
-				color[2] = 0x00;
-			break;
-
-			case 2:
-				color[0] = 0x00;
-				color[1] = 0xff;
-				color[2] = 0x00;
-			break;
-
-			case 3:
-				color[0] = 0x00;
-				color[1] = 0x00;
-				color[2] = 0xff;
-			break;
-
-			default:
-			break;
-
-		}
-
-		led_pushDataset( color[0], color[1], color[2] );
-	}
-
-	// cycle through colors
-	if( last_color > 2 )
-		last_color = 0;
-	else
-		last_color++;
-
-	led_execute( );
-	_delay_ms(200);
-}
-
-
-
-void patternRandomDiscret( void ) {
-	int j;
-	uint16_t rnd;
-	uint8_t color[3];
-
-	for(j=0; j<NUM_LEDS; j++) {
-		while( !(rnd&7) ) { // we don't want 000
-			rnd = get_random( );
-		}
-
-		color[0] = rnd& 0x1? 0xff: 0x00;
-		color[1] = rnd& 0x2? 0xff: 0x00;
-		color[2] = rnd& 0x4? 0xff: 0x00;
-
-		rnd = 0;
-
-		led_pushDataset( color[0], color[1], color[2] );
-	}
-	led_execute( );
-	_delay_ms(200);
-}
-
-
-
-void patternRandom( void ) {
-	int j;
-	uint16_t rnd, rnd2;
-	uint8_t color[3];
-
-	for(j=0; j<NUM_LEDS; j++) {
-		rnd = get_random( );
-		//rnd2 = get_random( );
-				color[0] = (rnd>>8)/2;
-				color[1] = (rnd>>8)/2;
-				color[2] = rnd;
-
-
-		led_pushDataset( color[0], color[1], color[2] );
-	}
-	led_execute( );
-	_delay_ms(200);
-}
-
-
-
-void patternComets( void ) {
-	int color1=0, color2=0, color3=0;
-	int i=0, j=0;
-	led_t leds[NUM_LEDS];
-
-
-	for( i=0; i<NUM_LEDS; i++ ) {
-		if( color1 == i ) {
-			// spot
-			leds[i].r = 0x40;
-
-			// tail
-			for(j=1; j<5; j++) {
-				if( (i-j)<0 )
-					leds[i-j+NUM_LEDS].r = 0x02*(5-j);
-				else
-					leds[i-j].r = 0x02*(5-j);
-			}
-		}
-		else {
-			leds[i].r = 0x00;
-		}
-	}
-
-
-
-		for( i=0; i<NUM_LEDS; i++ ) {
-				if( color2 == i ) {
-					// spot
-					leds[i].b = 0x40;
-
-					// tail
-					for(j=1; j<5; j++) {
-						if( (i-j)<0 )
-							leds[i-j+NUM_LEDS].b = 0x02*(5-j);
-						else
-							leds[i-j].b = 0x02*(5-j);
-					}
-				}
-				else {
-					leds[i].b = 0x00;
-				}
-		}
-
-
-
-		for( i=0; i<NUM_LEDS; i++ ) {
-				if( color3 == i ) {
-					// spot
-					leds[i].g = 0x40;
-
-					// tail
-					for(j=1; j<5; j++) {
-						if( (i-j)<0 )
-							leds[i-j+NUM_LEDS].g = 0x02*(5-j);
-						else
-							leds[i-j].g = 0x02*(5-j);
-					}
-				}
-				else {
-					leds[i].g = 0x00;
-				}
-		}
-
-
-
-		color1++;
-		if(color1 > NUM_LEDS)
-			color1 = 0;
-
-		color2++;
-		color2++;
-		if(color2 > NUM_LEDS)
-			color2 = 0;
-
-		color3++;
-		color3++;
-		color3++;
-		if(color3 > NUM_LEDS)
-			color3 = 0;
-
-		for( i=0; i<40; i++ ) {
-			led_pushDataset( leds[i].r, leds[i].g, leds[i].b );
-		}
-		led_execute( );
-		_delay_ms(200);
-
-}
-
-
-
-#define FADE_STEPS 20
-void patternRandomTransition ( void ) {
-	int color1=0, color2=0, color3=0;
-	int i=0, j=0;
-	uint16_t rnd, rnd2;
-
-	led_t cur[NUM_LEDS];
-	led_t tar[NUM_LEDS];
-
-
-	for( i=0; i<NUM_LEDS; i++ ) {
-		rnd = get_random( );
-		rnd2 = get_random( );
-
-		tar[i].r = rnd&0x3F;
-		tar[i].g = rnd>>10;
-		tar[i].b = rnd2&0x3F;
-	}
-
-
-	for(j=0; j<FADE_STEPS; j++ ) {
-		for(i=0; i<NUM_LEDS; i++ ) {
-			if( cur[i].r > tar[i].r )
-				cur[i].r -= (cur[i].r - tar[i].r) / FADE_STEPS;
-			else
-				cur[i].r += (tar[i].r - cur[i].r) / FADE_STEPS;
-
-			if( cur[i].g > tar[i].g )
-				cur[i].g -= (cur[i].g - tar[i].g) / FADE_STEPS;
-			else
-				cur[i].g += (tar[i].g - cur[i].g) / FADE_STEPS;
-
-			if( cur[i].b > tar[i].b )
-				cur[i].b  -= (cur[i].b - tar[i].b) / FADE_STEPS;
-			else
-				cur[i].b += (tar[i].b - cur[i].b) / FADE_STEPS;
-		}
-		// write to hardware
-		for( i=0; i<NUM_LEDS; i++ ) {
-			led_pushDataset( cur[i].r, cur[i].g, cur[i].b );
-		}
-		led_execute( );
-	}
-}
-
-
-void leds_all_off(void)
-{
-	for( uint8_t i=0; i<NUM_LEDS; i++ ) {
-		led_pushDataset( 0,0,0 );
-	}
-}
 
 
 int my_can_init(void) {
@@ -487,25 +146,25 @@ int my_can_init(void) {
 	// PB4 == EN
 	DDRB  |= (1<<PB3)|(1<<PB4);
 	goto_active_mode();
-	
+
 	return 0;
 }
 
 
-void goto_sleep_mode(void)
-{
+
+void goto_sleep_mode( void ) {
 	// PB3 == STDBY
 	// PB4 == EN
 	PORTB &= ~(1<<PB3);
-	PORTB |=  (1<<PB4);
+	PORTB &= ~(1<<PB4);
 
 	wdt_enable(WDTO_500MS);
 	while(1) { ; } // wait for sleep or watchdog reset
 }
 
 
-int goto_active_mode(void)
-{
+
+int goto_active_mode( void ) {
 	// PB3 == STDBY
 	// PB4 == EN
 	PORTB |= (1<<PB3)|(1<<PB4);

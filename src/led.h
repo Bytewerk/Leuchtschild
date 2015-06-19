@@ -13,8 +13,14 @@
 	You should have received a copy of the GNU General Public License
 	along with LeuchtSchild.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+void led_init( void );
+void led_clear( void );
+
+void led_set( uint8_t ledId, uint8_t r, uint8_t g, uint8_t b );
+void led_run( void );
 void led_pushDataset( uint8_t r, uint8_t g, uint8_t b );
-void led_execute( void );
+void led_flush( void );
 void led_sendByte( uint8_t data );
 uint16_t gamma16( uint8_t input );
 
