@@ -156,7 +156,7 @@ void goto_sleep_mode( void ) {
 	// PB3 == STDBY
 	// PB4 == EN
 	PORTB &= ~(1<<PB3);
-	PORTB &= ~(1<<PB4);
+	PORTB |=  (1<<PB4);
 
 	wdt_enable(WDTO_500MS);
 	while(1) { ; } // wait for sleep or watchdog reset
