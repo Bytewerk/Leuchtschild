@@ -10,6 +10,7 @@
 #define SET_COLOR_MSG        0x00010112 // [R][G][B]
 #define SET_LED_MSG          0x00010113 // [R][G][B][ID]
 #define REQ_DISP_CONTENT_MSG 0x00010120 // [RATE(fps)]
+#define SET_SLEEPTIME        0x00010130 // Remaining Time to stay awake in s
 #define RESET_MSG            0x000101FF
 
 

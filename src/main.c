@@ -54,7 +54,7 @@ int main( void ) {
 	uint8_t i;
 	can_t msg_tx, msg_rx;
 	uint32_t now, t_send_heartbeat=0;
-	uint32_t t_sleep = 30000;
+	uint32_t t_sleep = 60000; // stay awake for 1 minute initially
 	uint8_t l_mode = 7;
 
 	timer_init( );
@@ -70,10 +70,12 @@ int main( void ) {
 		now = timer_getMs( );
 		led_run( );
 
-		if( t_sleep + 5000 < now ) {
+		
+		if( now > t_sleep ) {
 			led_clear( );
 			goto_sleep_mode();
 		}
+		
 
 		if( t_send_heartbeat + 1000 < now ) {
 			t_send_heartbeat = now;
@@ -92,11 +94,11 @@ int main( void ) {
 		// receive CAN
 		if ( can_check_message() ) {
 			can_get_message( &msg_rx );
-			t_sleep = now;
+			//t_sleep = now;
 
 			switch( msg_rx.id ) {
 				case RESET_MSG:
-					 soft_reset( );
+					soft_reset( );
 				break;
 
 				case SWITCH_MODE_MSG:
@@ -111,6 +113,27 @@ int main( void ) {
 
 				case SET_LED_MSG: // [R][G][B][LEDID]
 				break;
+
+				case SET_SLEEPTIME: // Set remaining time to stay awake
+					t_sleep = now + ((((msg_rx.data[0])<<8) | ((msg_rx.data[1])<<0))*1000UL);
+					if (msg_rx.data[2] =! 0xff) {
+						l_mode = msg_rx.data[2];
+					}
+					msg_tx.data[0] = t_sleep&0xff;
+					msg_tx.data[1] = (t_sleep>>8)&0xff;
+					msg_tx.data[2] = (t_sleep>>16)&0xff;
+					msg_tx.data[3] = (t_sleep>>24)&0xff;
+					msg_tx.data[4] = now&0xff;
+					msg_tx.data[5] = (now>>8)&0xff;
+					msg_tx.data[6] = (now>>16)&0xff;
+					msg_tx.data[7] = (now>>24)&0xff;
+					msg_tx.length = 8;
+					msg_tx.id = 0x1337da71;
+					msg_tx.flags.extended = 1;
+					msg_tx.flags.rtr = 0;
+					can_send_message( &msg_tx );
+					
+				break;
 			}
 		}
 
@@ -122,7 +145,7 @@ int main( void ) {
 			break;
 
 			case 1:
-				pattern_fading( );
+			  pattern_fading( );
 			break;
 
 			default:

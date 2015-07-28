@@ -69,9 +69,9 @@ void led_clear( void ) {
 
 void led_set( uint8_t ledId, uint8_t r, uint8_t g, uint8_t b ) {
 	if( ledId < NUM_LEDS ) {
-		memory_leds[ledId][r] = r;
-		memory_leds[ledId][g] = g;
-		memory_leds[ledId][b] = b;
+		memory_leds[ledId][0] = r;
+		memory_leds[ledId][1] = g;
+		memory_leds[ledId][2] = b;
 	}
 }
 

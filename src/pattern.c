@@ -73,9 +73,9 @@ void hsv_to_rgb( uint8_t h, uint8_t s, uint8_t v, uint8_t* red, uint8_t* green, 
 void pattern_fading( void ) {
 	int j;
 	uint8_t color[3];
-	static uint8_t last_color;
+	static uint8_t last_color=0;
 	uint32_t now;
-	static uint32_t delay;
+	static uint32_t delay=0;
 
 	now = timer_getMs( );
 
@@ -90,11 +90,6 @@ void pattern_fading( void ) {
 	}
 	last_color++;
 }
-
-
-
-
-
 
 /*
 void patternAnnoying( void ) {
