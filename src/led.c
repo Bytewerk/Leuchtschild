@@ -62,6 +62,7 @@ void led_clear( void ) {
 	for( i=0; i<NUM_LEDS; i++ ) {
 		led_set( i, 0,0,0 );
 	}
+	memory_leds_change = 1;
 }
 
 
@@ -88,6 +89,7 @@ void led_run( void ) {
 			for( i=0; i<NUM_LEDS; i++ ) {
 				led_pushDataset( memory_leds[i][0], memory_leds[i][1], memory_leds[i][2] );
 			}
+			state = s_flush;
 		break;
 
 		case s_flush:
@@ -107,7 +109,7 @@ void led_run( void ) {
 
 		case s_changeWait:
 			if( memory_leds_change ) {
-				memory_leds_change = 1;
+				memory_leds_change = 0;
 				state = s_sending;
 			}
 		break;

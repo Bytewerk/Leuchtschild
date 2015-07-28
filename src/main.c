@@ -73,6 +73,7 @@ int main( void ) {
 		
 		if( now > t_sleep ) {
 			led_clear( );
+			led_run( );
 			goto_sleep_mode();
 		}
 		
@@ -116,7 +117,7 @@ int main( void ) {
 
 				case SET_SLEEPTIME: // Set remaining time to stay awake
 					t_sleep = now + ((((msg_rx.data[0])<<8) | ((msg_rx.data[1])<<0))*1000UL);
-					if (msg_rx.data[2] =! 0xff) {
+					if (msg_rx.data[2] != 0xff) {
 						l_mode = msg_rx.data[2];
 					}
 					msg_tx.data[0] = t_sleep&0xff;
