@@ -37,6 +37,11 @@ typedef enum {
 static uint8_t memory_leds[NUM_LEDS][3];
 static uint8_t memory_leds_change=0;
 
+static void led_pushDataset( uint8_t r, uint8_t g, uint8_t b );
+static void led_flush( void );
+static void led_sendByte( uint8_t data );
+static uint16_t gamma16( uint8_t input );
+
 
 
 void led_init( void ) {
@@ -58,7 +63,7 @@ void led_init( void ) {
 
 void led_clear( void ) {
 	uint8_t i;
-
+	
 	for( i=0; i<NUM_LEDS; i++ ) {
 		led_set( i, 0,0,0 );
 	}
@@ -74,6 +79,8 @@ void led_set( uint8_t ledId, uint8_t r, uint8_t g, uint8_t b ) {
 		memory_leds[ledId][1] = g;
 		memory_leds[ledId][2] = b;
 	}
+	memory_leds_change = 1;
+	
 }
 
 
@@ -81,7 +88,7 @@ void led_set( uint8_t ledId, uint8_t r, uint8_t g, uint8_t b ) {
 void led_run( void ) {
 	static uint32_t timeout=0;
 	uint32_t now = timer_getMs();
-	static uint8_t state=s_sending;
+	static uint8_t state=s_changeWait;
 	uint8_t i;
 
 	switch( state ) {
@@ -122,7 +129,7 @@ void led_run( void ) {
 
 
 
-void led_pushDataset( uint8_t r, uint8_t g, uint8_t b ) {
+static void led_pushDataset( uint8_t r, uint8_t g, uint8_t b ) {
 	led_sendByte( r );
 	led_sendByte( g );
 	led_sendByte( b );
@@ -130,7 +137,7 @@ void led_pushDataset( uint8_t r, uint8_t g, uint8_t b ) {
 
 
 
-void led_flush( void ) {
+static void led_flush( void ) {
 	// activate newest dataset
 	// set clock pin to LOW for at least 500 uS
 	PORTB &= ~(1<<DAT);
@@ -140,7 +147,7 @@ void led_flush( void ) {
 
 
 
-void led_sendByte( uint8_t data ) {
+static void led_sendByte( uint8_t data ) {
 	int i;
 
 	for(i=0; i<8; i++) {
@@ -157,7 +164,7 @@ void led_sendByte( uint8_t data ) {
 
 
 
-uint16_t gamma16( uint8_t input ) {
+static uint16_t gamma16( uint8_t input ) {
 	/*
 
 	 * 16 bits to 8 bit CIE Lightness conversion

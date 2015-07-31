@@ -73,7 +73,11 @@ int main( void ) {
 		
 		if( now > t_sleep ) {
 			led_clear( );
-			led_run( );
+			uint32_t t_clear = timer_getMs( ) + 100;
+			while ( timer_getMs() > c_clear ) {
+			  led_run( );
+			}
+			wdt_reset();
 			goto_sleep_mode();
 		}
 		

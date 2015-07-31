@@ -19,11 +19,6 @@ void led_clear( void );
 
 void led_set( uint8_t ledId, uint8_t r, uint8_t g, uint8_t b );
 void led_run( void );
-void led_pushDataset( uint8_t r, uint8_t g, uint8_t b );
-void led_flush( void );
-void led_sendByte( uint8_t data );
-uint16_t gamma16( uint8_t input );
-
 
 
 typedef struct led_s {
