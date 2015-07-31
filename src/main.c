@@ -150,7 +150,7 @@ int main( void ) {
 			break;
 
 			case 1:
-			  pattern_fading( );
+				pattern_fading( );
 			break;
 
 			default:
