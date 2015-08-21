@@ -155,6 +155,10 @@ int main( void ) {
 			case 1:
 				pattern_fading( );
 			break;
+			
+			case 2:
+				pattern_fading_kitsch( );
+			break;
 
 			default:
 			break;

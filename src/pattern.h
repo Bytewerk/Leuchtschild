@@ -19,6 +19,7 @@
 void hsv_to_rgb( uint8_t h, uint8_t s, uint8_t v, uint8_t* red, uint8_t* green, uint8_t* blue );
 
 void pattern_fading( void );
+void pattern_fading_kitsch( void );
 #else
 #error "double include pattern.h"
 #endif
