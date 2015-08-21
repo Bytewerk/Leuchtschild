@@ -78,7 +78,7 @@ int main( void ) {
 			led_clear( );
 			uint32_t t_clear = timer_getMs( ) + 100;
 			while ( timer_getMs() < t_clear ) {
-			  led_run( );
+				led_run( );
 			}
 			wdt_reset();
 			goto_sleep_mode();
