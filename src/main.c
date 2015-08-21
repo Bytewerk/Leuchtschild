@@ -64,6 +64,9 @@ int main( void ) {
 
 
 	wdt_enable(WDTO_500MS);
+
+	led_clear( ); // clear LEDs on init
+	
 	while( 1 ) {
 		wdt_reset();
 
