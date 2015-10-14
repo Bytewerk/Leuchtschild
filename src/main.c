@@ -66,14 +66,14 @@ int main( void ) {
 	wdt_enable(WDTO_500MS);
 
 	led_clear( ); // clear LEDs on init
-	
+
 	while( 1 ) {
 		wdt_reset();
 
 		now = timer_getMs( );
 		led_run( );
 
-		
+
 		if( now > t_sleep ) {
 			led_clear( );
 			uint32_t t_clear = timer_getMs( ) + 100;
@@ -83,7 +83,7 @@ int main( void ) {
 			wdt_reset();
 			goto_sleep_mode();
 		}
-		
+
 
 		if( t_send_heartbeat + 1000 < now ) {
 			t_send_heartbeat = now;
@@ -140,7 +140,7 @@ int main( void ) {
 					msg_tx.flags.extended = 1;
 					msg_tx.flags.rtr = 0;
 					can_send_message( &msg_tx );
-					
+
 				break;
 			}
 		}
@@ -149,15 +149,28 @@ int main( void ) {
 		switch( l_mode ) {
 
 			case 0:
+				// reset image
 				led_clear( );
 			break;
 
 			case 1:
+				// color whirl
 				pattern_fading( );
 			break;
-			
+
 			case 2:
+				// fade all leds with the same color
 				pattern_fading_kitsch( );
+			break;
+
+			case 4:
+				// fade rainbow in bingo logo
+				pattern_bingo( );
+			break;
+
+			case 255:
+				// hold current led state
+				pattern_hold( );
 			break;
 
 			default:

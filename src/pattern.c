@@ -91,6 +91,8 @@ void pattern_fading( void ) {
 	last_color++;
 }
 
+
+
 void pattern_fading_kitsch( void ) {
 	int j;
 	uint8_t color[3];
@@ -111,6 +113,42 @@ void pattern_fading_kitsch( void ) {
 	}
 	last_color++;
 }
+
+
+
+void pattern_bingo( void ) {
+	int j;
+	uint8_t color[3];
+	static uint8_t last_color=0;
+	uint32_t now;
+	static uint32_t delay=0;
+
+	now = timer_getMs( );
+
+	if( delay > now ) {
+		return;
+	}
+	delay = now + 20;
+
+	// all white
+	for( j=0; j<NUM_LEDS; j++ ) {
+		led_set( j, 0xff, 0xff, 0xff );
+	}
+
+	// add bingo rainbow
+	hsv_to_rgb( last_color+(6*j), 0xff/*s*/, 0xff/*v*/, &color[0], &color[1], &color[2] );
+	for( j=16; j<19; j++ ) {
+		led_set( j, color[0], color[1], color[2] );
+	}
+	last_color++;
+}
+
+
+
+void pattern_hold( void ) {
+	// make use of the framebuffer and hold the last image
+}
+
 
 
 /*
