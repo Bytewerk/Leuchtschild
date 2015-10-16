@@ -55,7 +55,7 @@ int main( void ) {
 	can_t msg_tx, msg_rx;
 	uint32_t now, t_send_heartbeat=0;
 	uint32_t t_sleep = 60000; // stay awake for 1 minute initially
-	uint8_t l_mode = 7;
+	uint8_t l_mode = 0;
 
 	timer_init( );
 	led_init( );
@@ -166,6 +166,11 @@ int main( void ) {
 			case 4:
 				// fade rainbow in bingo logo
 				pattern_bingo( );
+			break;
+
+			case 5:
+				// fade rainbow in bingo logo
+				pattern_scanner( );
 			break;
 
 			case 255:

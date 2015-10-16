@@ -23,6 +23,12 @@
 #include "pattern.h"
 
 
+//##################
+//# 20          38 #
+//#             39 #
+//# 19          01 #
+//##################
+
 
 void hsv_to_rgb( uint8_t h, uint8_t s, uint8_t v, uint8_t* red, uint8_t* green, uint8_t* blue ) {
 	unsigned char r,g,b, i, f;
@@ -142,6 +148,143 @@ void pattern_bingo( void ) {
 	}
 	last_color++;
 }
+
+
+
+void pattern_scanner( void ) {
+	// move a colored bar over the sign back and forth
+	int j;
+	static uint8_t frame=0;
+	uint32_t now;
+	static uint32_t delay=0;
+
+	now = timer_getMs( );
+
+	if( delay > now ) {
+		return; // only continue in set intervals
+	}
+	delay = now +1000;
+
+
+
+	// all grey
+	for( j=0; j<NUM_LEDS; j++ ) {
+		led_set( j, 0x70, 0x70, 0x70 );
+	}
+
+	switch( frame ) {
+		case 0:
+			led_set( 0, 0xff, 0x00, 0x00 );
+			led_set( 39, 0xff, 0x00, 0x00 );
+		break;
+
+		case 1:
+			led_set( 1, 0xff, 0x00, 0x00 );
+			led_set( 38, 0xff, 0x00, 0x00 );
+		break;
+
+		case 2:
+			led_set( 2, 0xff, 0x00, 0x00 );
+			led_set( 37, 0xff, 0x00, 0x00 );
+		break;
+
+		case 3:
+			led_set( 3, 0xff, 0x00, 0x00 );
+			led_set( 36, 0xff, 0x00, 0x00 );
+		break;
+
+		case 4:
+			led_set( 4, 0xff, 0x00, 0x00 );
+			led_set( 35, 0xff, 0x00, 0x00 );
+		break;
+
+		case 5:
+			led_set( 5, 0xff, 0x00, 0x00 );
+			led_set( 34, 0xff, 0x00, 0x00 );
+		break;
+
+		case 6:
+			led_set( 6, 0xff, 0x00, 0x00 );
+			led_set( 33, 0xff, 0x00, 0x00 );
+		break;
+
+		case 7:
+			led_set( 7, 0xff, 0x00, 0x00 );
+			led_set( 32, 0xff, 0x00, 0x00 );
+		break;
+
+		case 8:
+			led_set( 8, 0xff, 0x00, 0x00 );
+			led_set( 31, 0xff, 0x00, 0x00 );
+		break;
+
+		case 9:
+			led_set( 9, 0xff, 0x00, 0x00 );
+			led_set( 30, 0xff, 0x00, 0x00 );
+		break;
+
+		case 10:
+			led_set( 10, 0xff, 0x00, 0x00 );
+			led_set( 29, 0xff, 0x00, 0x00 );
+		break;
+
+		case 11:
+			led_set( 11, 0xff, 0x00, 0x00 );
+			led_set( 28, 0xff, 0x00, 0x00 );
+		break;
+
+		case 12:
+			led_set( 12, 0xff, 0x00, 0x00 );
+			led_set( 27, 0xff, 0x00, 0x00 );
+		break;
+
+		case 13:
+			led_set( 13, 0xff, 0x00, 0x00 );
+			led_set( 26, 0xff, 0x00, 0x00 );
+		break;
+
+		case 14:
+			led_set( 14, 0xff, 0x00, 0x00 );
+			led_set( 25, 0xff, 0x00, 0x00 );
+		break;
+
+		case 15:
+			led_set( 15, 0xff, 0x00, 0x00 );
+			led_set( 24, 0xff, 0x00, 0x00 );
+		break;
+
+		case 16:
+			led_set( 16, 0xff, 0x00, 0x00 );
+			led_set( 23, 0xff, 0x00, 0x00 );
+		break;
+
+		case 17:
+			led_set( 17, 0xff, 0x00, 0x00 );
+			led_set( 22, 0xff, 0x00, 0x00 );
+		break;
+
+		case 18:
+			led_set( 18, 0xff, 0x00, 0x00 );
+			led_set( 21, 0xff, 0x00, 0x00 );
+		break;
+
+		case 19:
+			led_set( 19, 0xff, 0x00, 0x00 );
+			led_set( 20, 0xff, 0x00, 0x00 );
+		break;
+
+		default:
+		break;
+	}
+
+
+	frame++;
+
+	if( frame > 19 ) {
+		frame = 0;
+	}
+}
+
 
 
 
