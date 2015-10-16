@@ -130,14 +130,14 @@ void pattern_bingo( void ) {
 	}
 	delay = now + 20;
 
-	// all white
+	// all grey
 	for( j=0; j<NUM_LEDS; j++ ) {
-		led_set( j, 0xff, 0xff, 0xff );
+		led_set( j, 0x70, 0x70, 0x70 );
 	}
 
 	// add bingo rainbow
 	hsv_to_rgb( last_color+(6*j), 0xff/*s*/, 0xff/*v*/, &color[0], &color[1], &color[2] );
-	for( j=16; j<19; j++ ) {
+	for( j=20; j<25; j++ ) {
 		led_set( j, color[0], color[1], color[2] );
 	}
 	last_color++;
