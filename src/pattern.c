@@ -21,7 +21,7 @@
 #include "led.h"
 #include "timer.h"
 #include "pattern.h"
-
+#include "random.h"
 
 //##################
 //# 20          38 #
@@ -155,27 +155,33 @@ void pattern_scanner( void ) {
 	// move a colored bar over the sign back and forth
 	int j;
 	static uint8_t frame=0;
-	uint32_t now;
+	static uint8_t last_color=0;
 	static uint32_t delay=0;
+	uint8_t color[3];
+	uint32_t now;
 
 	now = timer_getMs( );
 
 	if( delay > now ) {
 		return; // only continue in set intervals
 	}
-	delay = now +100;
-
-
+	delay = now +50;
 
 	// all grey
 	for( j=0; j<NUM_LEDS; j++ ) {
 		led_set( j, 0x70, 0x70, 0x70 );
 	}
 
+	if( frame == 19 || frame == 0 ) {
+		last_color = get_random( );
+	}
+
+	hsv_to_rgb( last_color, 0xff/*s*/, 0xff/*v*/, &color[0], &color[1], &color[2] );
+
 	switch( frame ) {
 		case 0:
-			led_set(  0, 0xff, 0x00, 0x00 );
-			led_set( 39, 0xff, 0x00, 0x00 );
+			led_set(  0, color[0], color[1], color[2] );
+			led_set( 39, color[0], color[1], color[2] );
 			led_set(  1, 0x00, 0x00, 0x00 );
 			led_set( 38, 0x00, 0x00, 0x00 );
 		break;
@@ -184,8 +190,8 @@ void pattern_scanner( void ) {
 		case 37:
 			led_set(  0, 0x00, 0x00, 0x00 );
 			led_set( 39, 0x00, 0x00, 0x00 );
-			led_set(  1, 0xff, 0x00, 0x00 );
-			led_set( 38, 0xff, 0x00, 0x00 );
+			led_set(  1, color[0], color[1], color[2] );
+			led_set( 38, color[0], color[1], color[2] );
 			led_set(  2, 0x00, 0x00, 0x00 );
 			led_set( 37, 0x00, 0x00, 0x00 );
 		break;
@@ -194,8 +200,8 @@ void pattern_scanner( void ) {
 		case 36:
 			led_set(  1, 0x00, 0x00, 0x00 );
 			led_set( 38, 0x00, 0x00, 0x00 );
-			led_set(  2, 0xff, 0x00, 0x00 );
-			led_set( 37, 0xff, 0x00, 0x00 );
+			led_set(  2, color[0], color[1], color[2] );
+			led_set( 37, color[0], color[1], color[2] );
 			led_set(  3, 0x00, 0x00, 0x00 );
 			led_set( 36, 0x00, 0x00, 0x00 );
 		break;
@@ -204,8 +210,8 @@ void pattern_scanner( void ) {
 		case 35:
 			led_set(  2, 0x00, 0x00, 0x00 );
 			led_set( 37, 0x00, 0x00, 0x00 );
-			led_set(  3, 0xff, 0x00, 0x00 );
-			led_set( 36, 0xff, 0x00, 0x00 );
+			led_set(  3, color[0], color[1], color[2] );
+			led_set( 36, color[0], color[1], color[2] );
 			led_set(  4, 0x00, 0x00, 0x00 );
 			led_set( 35, 0x00, 0x00, 0x00 );
 		break;
@@ -214,8 +220,8 @@ void pattern_scanner( void ) {
 		case 34:
 			led_set(  3, 0x00, 0x00, 0x00 );
 			led_set( 36, 0x00, 0x00, 0x00 );
-			led_set(  4, 0xff, 0x00, 0x00 );
-			led_set( 35, 0xff, 0x00, 0x00 );
+			led_set(  4, color[0], color[1], color[2] );
+			led_set( 35, color[0], color[1], color[2] );
 			led_set(  5, 0x00, 0x00, 0x00 );
 			led_set( 34, 0x00, 0x00, 0x00 );
 		break;
@@ -224,8 +230,8 @@ void pattern_scanner( void ) {
 		case 33:
 			led_set(  4, 0x00, 0x00, 0x00 );
 			led_set( 35, 0x00, 0x00, 0x00 );
-			led_set(  5, 0xff, 0x00, 0x00 );
-			led_set( 34, 0xff, 0x00, 0x00 );
+			led_set(  5, color[0], color[1], color[2] );
+			led_set( 34, color[0], color[1], color[2] );
 			led_set(  6, 0x00, 0x00, 0x00 );
 			led_set( 33, 0x00, 0x00, 0x00 );
 		break;
@@ -234,8 +240,8 @@ void pattern_scanner( void ) {
 		case 32:
 			led_set(  5, 0x00, 0x00, 0x00 );
 			led_set( 34, 0x00, 0x00, 0x00 );
-			led_set(  6, 0xff, 0x00, 0x00 );
-			led_set( 33, 0xff, 0x00, 0x00 );
+			led_set(  6, color[0], color[1], color[2] );
+			led_set( 33, color[0], color[1], color[2] );
 			led_set(  7, 0x00, 0x00, 0x00 );
 			led_set( 32, 0x00, 0x00, 0x00 );
 		break;
@@ -244,8 +250,8 @@ void pattern_scanner( void ) {
 		case 31:
 			led_set(  6, 0x00, 0x00, 0x00 );
 			led_set( 33, 0x00, 0x00, 0x00 );
-			led_set(  7, 0xff, 0x00, 0x00 );
-			led_set( 32, 0xff, 0x00, 0x00 );
+			led_set(  7, color[0], color[1], color[2] );
+			led_set( 32, color[0], color[1], color[2] );
 			led_set(  8, 0x00, 0x00, 0x00 );
 			led_set( 31, 0x00, 0x00, 0x00 );
 		break;
@@ -254,8 +260,8 @@ void pattern_scanner( void ) {
 		case 30:
 			led_set(  7, 0x00, 0x00, 0x00 );
 			led_set( 32, 0x00, 0x00, 0x00 );
-			led_set(  8, 0xff, 0x00, 0x00 );
-			led_set( 31, 0xff, 0x00, 0x00 );
+			led_set(  8, color[0], color[1], color[2] );
+			led_set( 31, color[0], color[1], color[2] );
 			led_set(  9, 0x00, 0x00, 0x00 );
 			led_set( 30, 0x00, 0x00, 0x00 );
 		break;
@@ -264,8 +270,8 @@ void pattern_scanner( void ) {
 		case 29:
 			led_set(  8, 0x00, 0x00, 0x00 );
 			led_set( 31, 0x00, 0x00, 0x00 );
-			led_set(  9, 0xff, 0x00, 0x00 );
-			led_set( 30, 0xff, 0x00, 0x00 );
+			led_set(  9, color[0], color[1], color[2] );
+			led_set( 30, color[0], color[1], color[2] );
 			led_set( 10, 0x00, 0x00, 0x00 );
 			led_set( 29, 0x00, 0x00, 0x00 );
 		break;
@@ -274,8 +280,8 @@ void pattern_scanner( void ) {
 		case 28:
 			led_set(  9, 0x00, 0x00, 0x00 );
 			led_set( 30, 0x00, 0x00, 0x00 );
-			led_set( 10, 0xff, 0x00, 0x00 );
-			led_set( 29, 0xff, 0x00, 0x00 );
+			led_set( 10, color[0], color[1], color[2] );
+			led_set( 29, color[0], color[1], color[2] );
 			led_set( 11, 0x00, 0x00, 0x00 );
 			led_set( 28, 0x00, 0x00, 0x00 );
 		break;
@@ -284,8 +290,8 @@ void pattern_scanner( void ) {
 		case 27:
 			led_set( 10, 0x00, 0x00, 0x00 );
 			led_set( 29, 0x00, 0x00, 0x00 );
-			led_set( 11, 0xff, 0x00, 0x00 );
-			led_set( 28, 0xff, 0x00, 0x00 );
+			led_set( 11, color[0], color[1], color[2] );
+			led_set( 28, color[0], color[1], color[2] );
 			led_set( 12, 0x00, 0x00, 0x00 );
 			led_set( 27, 0x00, 0x00, 0x00 );
 		break;
@@ -294,8 +300,8 @@ void pattern_scanner( void ) {
 		case 26:
 			led_set( 11, 0x00, 0x00, 0x00 );
 			led_set( 28, 0x00, 0x00, 0x00 );
-			led_set( 12, 0xff, 0x00, 0x00 );
-			led_set( 27, 0xff, 0x00, 0x00 );
+			led_set( 12, color[0], color[1], color[2] );
+			led_set( 27, color[0], color[1], color[2] );
 			led_set( 13, 0x00, 0x00, 0x00 );
 			led_set( 26, 0x00, 0x00, 0x00 );
 		break;
@@ -304,8 +310,8 @@ void pattern_scanner( void ) {
 		case 25:
 			led_set( 12, 0x00, 0x00, 0x00 );
 			led_set( 27, 0x00, 0x00, 0x00 );
-			led_set( 13, 0xff, 0x00, 0x00 );
-			led_set( 26, 0xff, 0x00, 0x00 );
+			led_set( 13, color[0], color[1], color[2] );
+			led_set( 26, color[0], color[1], color[2] );
 			led_set( 14, 0x00, 0x00, 0x00 );
 			led_set( 25, 0x00, 0x00, 0x00 );
 		break;
@@ -314,8 +320,8 @@ void pattern_scanner( void ) {
 		case 24:
 			led_set( 13, 0x00, 0x00, 0x00 );
 			led_set( 26, 0x00, 0x00, 0x00 );
-			led_set( 14, 0xff, 0x00, 0x00 );
-			led_set( 25, 0xff, 0x00, 0x00 );
+			led_set( 14, color[0], color[1], color[2] );
+			led_set( 25, color[0], color[1], color[2] );
 			led_set( 15, 0x00, 0x00, 0x00 );
 			led_set( 24, 0x00, 0x00, 0x00 );
 		break;
@@ -324,8 +330,8 @@ void pattern_scanner( void ) {
 		case 23:
 			led_set( 14, 0x00, 0x00, 0x00 );
 			led_set( 25, 0x00, 0x00, 0x00 );
-			led_set( 15, 0xff, 0x00, 0x00 );
-			led_set( 24, 0xff, 0x00, 0x00 );
+			led_set( 15, color[0], color[1], color[2] );
+			led_set( 24, color[0], color[1], color[2] );
 			led_set( 16, 0x00, 0x00, 0x00 );
 			led_set( 23, 0x00, 0x00, 0x00 );
 		break;
@@ -334,8 +340,8 @@ void pattern_scanner( void ) {
 		case 22:
 			led_set( 15, 0x00, 0x00, 0x00 );
 			led_set( 24, 0x00, 0x00, 0x00 );
-			led_set( 16, 0xff, 0x00, 0x00 );
-			led_set( 23, 0xff, 0x00, 0x00 );
+			led_set( 16, color[0], color[1], color[2] );
+			led_set( 23, color[0], color[1], color[2] );
 			led_set( 17, 0x00, 0x00, 0x00 );
 			led_set( 22, 0x00, 0x00, 0x00 );
 		break;
@@ -344,8 +350,8 @@ void pattern_scanner( void ) {
 		case 21:
 			led_set( 16, 0x00, 0x00, 0x00 );
 			led_set( 23, 0x00, 0x00, 0x00 );
-			led_set( 17, 0xff, 0x00, 0x00 );
-			led_set( 22, 0xff, 0x00, 0x00 );
+			led_set( 17, color[0], color[1], color[2] );
+			led_set( 22, color[0], color[1], color[2] );
 			led_set( 18, 0x00, 0x00, 0x00 );
 			led_set( 21, 0x00, 0x00, 0x00 );
 		break;
@@ -354,8 +360,8 @@ void pattern_scanner( void ) {
 		case 20:
 			led_set( 17, 0x00, 0x00, 0x00 );
 			led_set( 22, 0x00, 0x00, 0x00 );
-			led_set( 18, 0xff, 0x00, 0x00 );
-			led_set( 21, 0xff, 0x00, 0x00 );
+			led_set( 18, color[0], color[1], color[2] );
+			led_set( 21, color[0], color[1], color[2] );
 			led_set( 19, 0x00, 0x00, 0x00 );
 			led_set( 20, 0x00, 0x00, 0x00 );
 		break;
@@ -363,17 +369,15 @@ void pattern_scanner( void ) {
 		case 19:
 			led_set( 18, 0x00, 0x00, 0x00 );
 			led_set( 21, 0x00, 0x00, 0x00 );
-			led_set( 19, 0xff, 0x00, 0x00 );
-			led_set( 20, 0xff, 0x00, 0x00 );
+			led_set( 19, color[0], color[1], color[2] );
+			led_set( 20, color[0], color[1], color[2] );
 		break;
 
 		default:
 		break;
 	}
 
-
 	frame++;
-
 	if( frame > 37 ) {
 		frame = 0;
 	}
