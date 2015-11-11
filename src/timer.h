@@ -9,7 +9,7 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-void timer_wait( uint32_t delay );
+void timer_waitMs( uint32_t delay );
 uint32_t timer_getMs( void );
 void timer_init( void );
 
