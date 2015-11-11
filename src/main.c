@@ -79,6 +79,7 @@ int main( void ) {
 			uint32_t t_clear = timer_getMs( ) + 100;
 			while ( timer_getMs() < t_clear ) {
 				led_run( );
+				timer_waitMs(1);
 			}
 			wdt_reset();
 			goto_sleep_mode();
@@ -169,7 +170,7 @@ int main( void ) {
 			break;
 
 			case 5:
-				// fade rainbow in bingo logo
+				// move colored bar back and forth over white background
 				pattern_scanner( );
 			break;
 
