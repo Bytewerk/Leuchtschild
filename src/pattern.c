@@ -415,25 +415,17 @@ void patternRandomDiscret( void ) {
 
 
 void patternRandomDiscretPicky( void ) {
-	int j;
+	uint8_t j;
 	uint16_t rnd;
 	uint8_t color[3];
-	static uint32_t t_delay=0, t_wipe=0;
+	static uint32_t t_delay=0;
 
 	uint32_t now = timer_getMs( );
 
-	if( t_delay +250 < now ) {
+	if( t_delay > now ) {
 		return; // only continue in set intervals
 	}
-	t_delay = now;
-
-	if( t_wipe + (60*1000UL) /*ms*/ < now ) {
-		t_wipe = now;
-		// all grey
-		for( j=0; j<NUM_LEDS; j++ ) {
-			led_set( j, 0x20, 0x20, 0x20 );
-		}
-	}
+	t_delay = now +50;
 
 	rnd = 0;
 	while( !(rnd&7) || ((rnd&7)==7)) { // we don't want 000 or 111
@@ -441,7 +433,6 @@ void patternRandomDiscretPicky( void ) {
 	}
 
 	j = (rnd>>8) % NUM_LEDS; // choose a single LED
-
 	color[0] = rnd& 0x1? 0xff: 0x00;
 	color[1] = rnd& 0x2? 0xff: 0x00;
 	color[2] = rnd& 0x4? 0xff: 0x00;

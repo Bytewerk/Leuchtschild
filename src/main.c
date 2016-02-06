@@ -179,7 +179,7 @@ int main( void ) {
 			break;
 
 			case 7:
-				patternRandomDiscretPicky( ); // change color of a single LED. wipe grey every minute.
+				patternRandomDiscretPicky( ); // change to random color of a single LED
 			break;
 
 			case 255:
@@ -188,6 +188,7 @@ int main( void ) {
 			break;
 
 			default:
+				l_mode = 0;
 			break;
 		}
 	}
