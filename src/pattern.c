@@ -385,6 +385,71 @@ void pattern_scanner( void ) {
 
 
 
+void patternRandomDiscret( void ) {
+	int j;
+	uint16_t rnd;
+	uint8_t color[3];
+	static uint32_t delay=0;
+
+	uint32_t now = timer_getMs( );
+
+	if( delay > now ) {
+		return; // only continue in set intervals
+	}
+	delay = now +250;
+
+	for(j=0; j<NUM_LEDS; j++) {
+		rnd = 0;
+		while( !(rnd&7) || ((rnd&7)==7)) { // we don't want 000 or 111
+			rnd = get_random( );
+		}
+
+		color[0] = rnd& 0x1? 0xff: 0x00;
+		color[1] = rnd& 0x2? 0xff: 0x00;
+		color[2] = rnd& 0x4? 0xff: 0x00;
+
+		led_set( j, color[0], color[1], color[2] );
+	}
+}
+
+
+
+void patternRandomDiscretPicky( void ) {
+	int j;
+	uint16_t rnd;
+	uint8_t color[3];
+	static uint32_t t_delay=0, t_wipe=0;
+
+	uint32_t now = timer_getMs( );
+
+	if( t_delay +250 < now ) {
+		return; // only continue in set intervals
+	}
+	t_delay = now;
+
+	if( t_wipe + (60*1000UL) /*ms*/ < now ) {
+		t_wipe = now;
+		// all grey
+		for( j=0; j<NUM_LEDS; j++ ) {
+			led_set( j, 0x20, 0x20, 0x20 );
+		}
+	}
+
+	rnd = 0;
+	while( !(rnd&7) || ((rnd&7)==7)) { // we don't want 000 or 111
+		rnd = get_random( );
+	}
+
+	j = (rnd>>8) % NUM_LEDS; // choose a single LED
+
+	color[0] = rnd& 0x1? 0xff: 0x00;
+	color[1] = rnd& 0x2? 0xff: 0x00;
+	color[2] = rnd& 0x4? 0xff: 0x00;
+
+	led_set( j, color[0], color[1], color[2] );
+}
+
+
 
 void pattern_hold( void ) {
 	// make use of the framebuffer and hold the last image
@@ -444,28 +509,6 @@ void patternAnnoying( void ) {
 }
 
 
-
-void patternRandomDiscret( void ) {
-	int j;
-	uint16_t rnd;
-	uint8_t color[3];
-
-	for(j=0; j<NUM_LEDS; j++) {
-		while( !(rnd&7) ) { // we don't want 000
-			rnd = get_random( );
-		}
-
-		color[0] = rnd& 0x1? 0xff: 0x00;
-		color[1] = rnd& 0x2? 0xff: 0x00;
-		color[2] = rnd& 0x4? 0xff: 0x00;
-
-		rnd = 0;
-
-		led_pushDataset( color[0], color[1], color[2] );
-	}
-	led_execute( );
-	_delay_ms(200);
-}
 
 
 

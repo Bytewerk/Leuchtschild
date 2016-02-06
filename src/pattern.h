@@ -22,6 +22,8 @@ void pattern_fading( void );
 void pattern_fading_kitsch( void );
 void pattern_bingo( void );
 void pattern_scanner( void );
+void patternRandomDiscret( void );
+void patternRandomDiscretPicky( void );
 void pattern_hold( void );
 
 #else
