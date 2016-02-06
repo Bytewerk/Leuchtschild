@@ -174,6 +174,14 @@ int main( void ) {
 				pattern_scanner( );
 			break;
 
+			case 6:
+				patternRandomDiscret( ); // every LED gets a random color every 250ms
+			break;
+
+			case 7:
+				patternRandomDiscretPicky( ); // change color of a single LED. wipe grey every minute.
+			break;
+
 			case 255:
 				// hold current led state
 				pattern_hold( );
