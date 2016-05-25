@@ -92,11 +92,16 @@ int main( void ) {
 			msg_tx.id = HEARTBEAT_MSG;
 			msg_tx.flags.extended = 1;
 			msg_tx.flags.rtr = 0;
-			msg_tx.length = 2;
-			msg_tx.data[0] = l_mode;
+			msg_tx.length = 6;
+
+			msg_tx.data[0] = (now>>24)&0xff;
+			msg_tx.data[1] = (now>>16)&0xff;
+			msg_tx.data[2] = (now>>8)&0xff;
+			msg_tx.data[3] = now&0xff;
+			msg_tx.data[4] = 0x00;
+			msg_tx.data[5] = l_mode;
 
 			can_send_message( &msg_tx );
-			msg_tx.data[1]++;
 		}
 
 
@@ -120,28 +125,11 @@ int main( void ) {
 				case REQ_DISP_CONTENT_MSG: // [RATE(fps)]
 				break;
 
-				case SET_LED_MSG: // [R][G][B][LEDID]
+				case SET_LED_MSG: // [R][G][B]
 				break;
 
 				case SET_SLEEPTIME: // Set remaining time to stay awake
 					t_sleep = now + ((((msg_rx.data[0])<<8) | ((msg_rx.data[1])<<0))*1000UL);
-					if (msg_rx.data[2] != 0xff) {
-						l_mode = msg_rx.data[2];
-					}
-					msg_tx.data[0] = t_sleep&0xff;
-					msg_tx.data[1] = (t_sleep>>8)&0xff;
-					msg_tx.data[2] = (t_sleep>>16)&0xff;
-					msg_tx.data[3] = (t_sleep>>24)&0xff;
-					msg_tx.data[4] = now&0xff;
-					msg_tx.data[5] = (now>>8)&0xff;
-					msg_tx.data[6] = (now>>16)&0xff;
-					msg_tx.data[7] = (now>>24)&0xff;
-					msg_tx.length = 8;
-					msg_tx.id = 0x1337da71;
-					msg_tx.flags.extended = 1;
-					msg_tx.flags.rtr = 0;
-					can_send_message( &msg_tx );
-
 				break;
 			}
 		}
