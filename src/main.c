@@ -94,12 +94,11 @@ int main( void ) {
 			msg_tx.flags.rtr = 0;
 			msg_tx.length = 6;
 
-			msg_tx.data[0] = (now>>24)&0xff;
-			msg_tx.data[1] = (now>>16)&0xff;
-			msg_tx.data[2] = (now>>8)&0xff;
-			msg_tx.data[3] = now&0xff;
-			msg_tx.data[4] = 0x00;
-			msg_tx.data[5] = l_mode;
+			msg_tx.data[0] = now&0xff;
+			msg_tx.data[1] = (now>>8)&0xff;
+			msg_tx.data[2] = (now>>16)&0xff;
+			msg_tx.data[3] = (now>>24)&0xff;
+			msg_tx.data[4] = l_mode;
 
 			can_send_message( &msg_tx );
 		}
@@ -129,7 +128,7 @@ int main( void ) {
 				break;
 
 				case SET_SLEEPTIME: // Set remaining time to stay awake
-					t_sleep = now + ((((msg_rx.data[0])<<8) | ((msg_rx.data[1])<<0))*1000UL);
+					t_sleep = now + ((((msg_rx.data[1])<<8) | ((msg_rx.data[0])<<0))*1000UL);
 				break;
 			}
 		}

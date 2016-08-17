@@ -25,7 +25,8 @@ OBJR=$(OBJTMP:%.c=$(BR)/obj/%.o)
 RELEASE_DEFINES =  -DCOMPILE_DATE=\"$(COMPILE_DATE)\"
 RELEASE_DEFINES += -DF_CPU=16000000UL
 RELEASE_DEFINES += -DCOLOR
-BASE_CFLAGS= -mmcu=atmega16m1 -Os -pedantic -fPIC -std=c99
+#BASE_CFLAGS= -mmcu=atmega16m1 -Os -pedantic -fPIC -std=c99
+BASE_CFLAGS= -mmcu=atmega16m1 -Os -pedantic -std=c99
 CFLAGS=$(BASE_CFLAGS)
 LDFLAGS=-lcan -Lsrc/can
 
